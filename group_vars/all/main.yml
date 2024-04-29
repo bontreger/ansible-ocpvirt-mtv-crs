@@ -1,0 +1,15 @@
+---
+# defaults file for providers
+
+provider_name: "vmware-testing"
+local_provider_name: "local-ocp"
+infra_vmware_migration_namespace: "openshift-mtv"
+infra_vmware_migration_vsphere_hostname: "https://portal.vc.opentlc.com/sdk"
+
+# Provide either a k8s secret with the vmware credentials, or specify the username/password
+# vmware_credentials: "vmware-credentials"
+
+infra_vmware_migration_vsphere_username: "{{ vault_infra_vmware_migration_vsphere_username }}"
+infra_vmware_migration_vsphere_password: "{{ vault_infra_vmware_migration_vsphere_password }}"
+infra_vmware_migration_vsphere_thumbprint: "{{ vault_infra_vmware_migration_vsphere_thumbprint }}"
+infra_vmware_migration_vsphere_validate_certs: false

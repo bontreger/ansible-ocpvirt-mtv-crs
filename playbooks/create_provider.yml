@@ -1,0 +1,64 @@
+---
+- name: Create providers in OCP Migration Toolkit for Virtualization
+  hosts: all
+  vars_files:
+    - "../vault.yml"
+  connection: local
+  tasks:
+    - name: Set up vmware_credentials
+      when: vmware_credentials is undefined
+      block:
+        - name: Create vmware_credentials secret
+          kubernetes.core.k8s:
+            host: "{{ ocp_api_url }}"
+            validate_certs: false
+            api_key: "{{ ocp_bearer_token }}"
+            state: present
+            definition:
+              apiVersion: v1
+              kind: Secret
+              type: Opaque
+              metadata:
+                name: "vmware-credentials"
+                namespace: "{{ infra_vmware_migration_namespace }}"
+              data:
+                insecureSkipVerify: "{{ infra_vmware_migration_vsphere_validate_certs | b64encode }}"
+                password: "{{ infra_vmware_migration_vsphere_password | b64encode }}"
+                thumbprint: "{{ infra_vmware_migration_vsphere_thumbprint | b64encode }}"
+                url: "{{ infra_vmware_migration_vsphere_hostname | b64encode }}"
+                user: "{{ infra_vmware_migration_vsphere_username | b64encode }}"
+        - name: Set vmware_credentials fact
+          ansible.builtin.set_fact:
+            vmware_credentials: "vmware-credentials"
+
+    - name: Deploy Provider resource
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: forklift.konveyor.io/v1beta1
+          kind: Provider
+          metadata:
+            name: "{{ provider_name }}"
+            namespace: "{{ infra_vmware_migration_namespace }}"
+          spec:
+            secret:
+              name: "{{ vmware_credentials }}"
+              namespace: "{{ infra_vmware_migration_namespace }}"
+            settings:
+              vddkInitImage: 'image-registry.openshift-image-registry.svc:5000/openshift/vddk:latest'
+            type: vsphere
+            url: "{{ infra_vmware_migration_vsphere_hostname }}"
+
+    - name: Create target MTV provider (kubevirt)
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: forklift.konveyor.io/v1beta1
+          kind: Provider
+          metadata:
+            name: "{{ local_provider_name }}"
+            namespace: "{{ infra_vmware_migration_namespace }}"
+          spec:
+            secret: {}
+            type: openshift
+            url: ''

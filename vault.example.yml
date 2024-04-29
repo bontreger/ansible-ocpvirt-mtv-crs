@@ -1,0 +1,5 @@
+vault_infra_vmware_migration_vsphere_username: "<<user>>@<<vcenter>>"
+vault_infra_vmware_migration_vsphere_password: "<<password>>"
+vault_infra_vmware_migration_vsphere_thumbprint: "<<thumbprint>>"
+
+
